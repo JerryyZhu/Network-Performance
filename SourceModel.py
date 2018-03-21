@@ -6,7 +6,7 @@
 import EventPkt
 import random
 import math
-from queue import Queue
+import queue
 
 class SourceModel:
 
@@ -24,10 +24,10 @@ class SourceModel:
     # https://stackoverflow.com/questions/2106503/pseudorandom-number-generator-exponential-distribution
     # Alternatively using random.expovariate which does the same thing
 
-    def generate_packets(self,num_packets):
-        q = Queue()
+    def generate_packets(self):
+        q = queue.Queue()
         time = 0
-        for x in range(1,num_packets+1);
+        for x in range(1, self.num_packets+1):
             # Generate an interval between packet arrival, ie time til next arrival
             interval = exponential_number_generator(input_lambda)
             time = time + interval
@@ -35,7 +35,7 @@ class SourceModel:
             # Create a new packet
             p = EventPkt.EventPkt(x , generate_size(self), time)
             q.put(p)
-            return q
+        return q
 
 
     def generate_size(self):
@@ -43,5 +43,5 @@ class SourceModel:
         # new_size = random.expovariate(packet_mean_size)
         # return -math.log(1.0 - random.random()) / rateParameter
 
-    def exponential_number_generator(lambd)
+    def exponential_number_generator(lambd):
         return -math.log(1.0 - random.random()) / lambd
