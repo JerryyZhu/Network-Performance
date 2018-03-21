@@ -22,7 +22,7 @@ class EventPkt(object):
         return end_time
 
     def get_arrivaltime(self):
-        return arrival_time
+        return self.arrival_time
 
     def set_arrivaltime(self, starttime):
         self.arrival_time = startTime

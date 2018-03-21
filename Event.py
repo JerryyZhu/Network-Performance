@@ -1,8 +1,11 @@
 import sys
 from SourceModel import *
+import random
 
 
 PACKET_SIZE_MEAN = 10000
+
+
 class Event:
     # Input parameters
     N_PKTS = None
@@ -33,8 +36,8 @@ class Event:
 
     def start_sim(self):
         for x in range(0,self.N_PKTS):
-            incoming_packet = self.server_queue.get()
-            handle_arrival(incoming_packet)
+            incoming_packet = self.source_queue.get()
+            self.handle_arrival(incoming_packet,self.server_queue)
 
     def handle_arrival(self,incoming,server_queue):
 
@@ -91,7 +94,7 @@ class Event:
 
 
     def get_process_time(self,incoming_pkt):
-        return incoming_pkt.get_packetsize()/self.RATE
+        return incoming_pkt.get_packet_size()/self.RATE
 
     def output_arrival(self,incoming_pkt):
         # [3749.00]: pkt 2748 arrives and finds 38 packets in the queue
@@ -124,12 +127,13 @@ def main():
     if len(sys.argv) < 3:
         print("Usage: {} npkts lambda".format(sys.argv[0]))
 
-    for x in range(len(sys.argv)):
-        print(sys.argv[x])
-    #
-    # EventHandler = Event(sys.argv[1],sys.argv[2])
+    # for x in range(len(sys.argv)):
+    #     print(sys.argv[x])
+    # #
+    EventHandler = Event(int(sys.argv[1]),int(sys.argv[2]))
     # print(sys.argv[1])
-    # EventHandler.generateSource(sys.argv[1])
+    EventHandler.generateSource()
+    EventHandler.start_sim()
 
 
 if __name__ == '__main__':
