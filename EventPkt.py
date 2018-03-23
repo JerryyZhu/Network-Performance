@@ -3,7 +3,7 @@
 
 class EventPkt(object):
     packet_size = 0
-    start_time = 0
+    start_time = 0.0
     end_time = -1
     packet_no = 0
     proc_time = 0
@@ -11,7 +11,7 @@ class EventPkt(object):
 
     def __init__(self, x, packetsize, starttime):
         self.packet_size = packetsize
-        self.start_time = starttime
+        self.arrival_time = float(starttime)
         self.packet_no = x
         self.process_time = 0
 

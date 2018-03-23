@@ -7,7 +7,7 @@
 from EventPkt import *
 import random
 import math
-import queue
+import Queue
 
 class SourceModel:
 
@@ -26,17 +26,22 @@ class SourceModel:
     # Alternatively using random.expovariate which does the same thing
 
     def generate_packets(self):
-        q = queue.Queue()
-        time = 0
+        q = Queue.Queue()
+        time = 0.01 - 0.01
         max = self.num_packets + 1
         for x in range(1, max):
             # Generate an interval between packet arrival, ie time til next arrival
             interval = self.exponential_number_generator(self.input_lambda)
-            time = time + interval
+            print(interval)
+            time = float(time) + float(interval)
+            print(time)
 
             # Create a new packet
-            p = EventPkt(x, self.generate_size(), time)
+            p = EventPkt(x, self.generate_size(), float(time))
+            print("Packet {} made, size {}, arrival time {}".format(p.get_packetno(),p.get_packet_size(),
+                                                                    float(p.get_arrivaltime())))
             q.put(p)
+
         return q
 
 
@@ -46,4 +51,14 @@ class SourceModel:
         # return -math.log(1.0 - random.random()) / rateParameter
 
     def exponential_number_generator(self,lambd):
-        return -math.log(1.0 - random.random()) / float(lambd)
+        # return -math.log(1.0 - random.random()) / float(lambd)
+        return random.expovariate(lambd)
+
+# Test code
+# def main():
+#     sourced = SourceModel(100,100,1250)
+#     sourced.generate_packets()
+#     print(sourced)
+#
+# if __name__ == "__main__":
+#     main()

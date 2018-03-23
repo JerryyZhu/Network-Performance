@@ -4,6 +4,7 @@ import random
 
 
 PACKET_SIZE_MEAN = 10000
+FILENAME = 'trace.txt'
 
 
 class Event:
@@ -26,7 +27,6 @@ class Event:
     # Time
     cur_time = 0
     cur_departure_time = 0
-
 
 
     def __init__(self, numPackets, packet_size_mean):
@@ -121,6 +121,16 @@ class Event:
     def generateSource(self):
         source = SourceModel(self.N_PKTS,sys.argv[2],PACKET_SIZE_MEAN)
         self.source_queue = source.generate_packets()
+
+    def read_from_file(self):
+        q = queue.Queue()
+        last_line = None
+
+        with open(FILENAME) as f:
+            for line in f:
+                if not last_line == None:
+                    data = line.split()
+                last_line = line
 
 
 def main():
