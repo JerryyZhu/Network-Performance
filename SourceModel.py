@@ -15,6 +15,7 @@ class SourceModel:
     packet_size_mean = 1250
     input_lambda = 0
     num_packets = 0
+    server_queue = 0
 
     def __init__(self,num_packets,input_lambda,packet_size_mean):
         self.packet_size_mean = packet_size_mean
@@ -27,20 +28,21 @@ class SourceModel:
 
     def generate_packets(self):
         q = Queue.Queue()
-        time = 0.01 - 0.01
+        time = 0.0
         max = self.num_packets + 1
         for x in range(1, max):
             # Generate an interval between packet arrival, ie time til next arrival
             interval = self.exponential_number_generator(self.input_lambda)
-            print(interval)
-            time = float(time) + float(interval)
-            print(time)
+            # print(interval)
+            time = time + interval
+            # print(time)
 
             # Create a new packet
             p = EventPkt(x, self.generate_size(), float(time))
-            print("Packet {} made, size {}, arrival time {}".format(p.get_packetno(),p.get_packet_size(),
-                                                                    float(p.get_arrivaltime())))
+            # print("Packet {} made, size {}, arrival time {}".format(p.get_packetno(),p.get_packet_size(),
+            #                                                         float(p.get_arrivaltime())))
             q.put(p)
+        self.server_queue = q
 
         return q
 
@@ -54,6 +56,9 @@ class SourceModel:
         # return -math.log(1.0 - random.random()) / float(lambd)
         return random.expovariate(lambd)
 
+    def generate_packet(self):
+        return self.server_queue.get()
+
 # Test code
 # def main():
 #     sourced = SourceModel(100,100,1250)
@@ -62,4 +67,3 @@ class SourceModel:
 #
 # if __name__ == "__main__":
 #     main()
-#

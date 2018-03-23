@@ -1,6 +1,7 @@
 import sys
 from SourceModel import *
 import random
+import Queue
 
 
 PACKET_SIZE_MEAN = 10000
@@ -35,8 +36,9 @@ class Event:
 
 
     def start_sim(self):
+        self.server_queue = Queue.Queue()
         for x in range(0,self.N_PKTS):
-            incoming_packet = self.source_queue.get()
+            incoming_packet = self.sourceModel.generate_packet()
             self.handle_arrival(incoming_packet,self.server_queue)
 
     def handle_arrival(self,incoming,server_queue):
@@ -119,7 +121,8 @@ class Event:
         return self.cur_time + self.get_process_time(packet)
 
     def generateSource(self):
-        source = SourceModel(self.N_PKTS,sys.argv[2],PACKET_SIZE_MEAN)
+        source = SourceModel(self.N_PKTS,int(sys.argv[2]),PACKET_SIZE_MEAN)
+        self.sourceModel = source
         self.source_queue = source.generate_packets()
 
     def read_from_file(self):
