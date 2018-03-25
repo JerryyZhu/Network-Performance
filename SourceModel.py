@@ -9,6 +9,7 @@ import random
 import math
 import Queue
 
+FILENAME = 'small_trace.txt'
 class SourceModel:
 
     # Generate exponential sized packets
@@ -46,11 +47,31 @@ class SourceModel:
 
         return q
 
+    def generate_from_file(self, FILENAME):
+        q = Queue.Queue()
+        time = 0.0
+        last_line = None
+        i = 1
+        with open(FILENAME) as f:
+            for line in f:
+                if not last_line == None:
+                    # print (line)
+                    data = line.split()
+                    time = time + float(data[0])
+                    p = EventPkt(i,int(data[1]),time)
+                    q.put(p)
+                    i = i + 1
+                last_line = line
+        self.server_queue = q
+        # if DEBUG:
+        print("There are {} packets".format(i))
+        self.num_packets = i
+        return q
 
     def generate_size(self):
         # return -1 * math.log(1.0 - random.random()) / self.packet_size_mean
         size = random.expovariate(1.0/self.packet_size_mean)
-        print("Packet size = " + str(size))
+        # print("Packet size = " + str(size))
         return size
         # return -math.log(1.0 - random.random()) / rateParameter
 
@@ -61,11 +82,15 @@ class SourceModel:
     def generate_packet(self):
         return self.server_queue.get()
 
+    def get_num_packets(self):
+        return self.num_packets
+
 # Test code
-# def main():
-#     sourced = SourceModel(100,100,1250)
-#     sourced.generate_packets()
-#     print(sourced)
-#
-# if __name__ == "__main__":
-#     main()
+def main():
+    sourced = SourceModel(100,100,1250)
+    # sourced.generate_packets()
+    sourced.generate_from_file(FILENAME)
+    print(sourced)
+
+if __name__ == "__main__":
+    main()

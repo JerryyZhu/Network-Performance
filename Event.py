@@ -6,9 +6,9 @@ import Queue
 
 
 PACKET_SIZE_MEAN = 1250
-FILENAME = 'trace.txt'
+FILENAME = 'small_trace.txt'
 LINK_SPEED = 1250
-DEBUG = False
+DEBUG = True
 P = [0, 0, 0, 0, 0,
      0, 0, 0, 0, 0,
      0, 0, 0]
@@ -31,6 +31,7 @@ class Event:
     # Measurement parameter
     total_cust = 0
     total_sojourn = 0
+    total_packets = 0
 
     # Time
     cur_time = 0.0
@@ -44,11 +45,13 @@ class Event:
 
 
     def start_sim(self):
+        print("called start_sim")
         self.server_queue = Queue.Queue()
-        for x in range(0,self.N_PKTS):
+        for x in range(0, self.sourceModel.get_num_packets()-1):
             incoming_packet = self.sourceModel.generate_packet()
             self.handle_arrival(incoming_packet, self.server_queue)
-
+            # print(x)
+        print("out of while loop")
         # Process packets still left in the server queue
         while self.server_queue.empty() == False:
             packet = self.server_queue.get()
@@ -73,11 +76,12 @@ class Event:
         total_customers = self.total_cust
         # print(int(total_customers))
         # print(int(total_sojourn_time))
-
+        # print("all done")
 
 
     def handle_arrival(self,incoming,server_queue):
 
+        self.total_packets += 1
         inc_arrival_time = incoming.get_arrivaltime()
         # Case 1 First Packet Ever
         if self.current_packet is None:
@@ -103,7 +107,7 @@ class Event:
             while server_queue.empty() == False:
                 # Incoming packet arrives later than the time current packet leaves
                 # If server queue not empty then check if the next packet finishes earlier
-                if inc_arrival_time > self.cur_departure_time:
+                if inc_arrival_time >= self.cur_departure_time:
                     # The current packet will leave
                     self.cur_time = self.cur_departure_time
                     self.output_departure(self.current_packet, self.calculate_sojourn(self.current_packet,self.cur_time))
@@ -146,6 +150,7 @@ class Event:
                 self.cur_proc = self.get_process_time(incoming)
                 self.cur_departure_time = self.cur_time + self.cur_proc
                 self.output_arrival(incoming)
+
                 if DEBUG:
                     print("packet {}: | arrival: {} | process: {} | departure: {} | cur: {}|".format(
                         self.current_packet.get_packetno(),
@@ -198,7 +203,7 @@ class Event:
         return (current_time + self.get_process_time(packet))
 
     def generateSource(self):
-        source = SourceModel(self.N_PKTS,int(sys.argv[2]),PACKET_SIZE_MEAN)
+        source = SourceModel(self.N_PKTS,float(sys.argv[2]),PACKET_SIZE_MEAN)
         self.sourceModel = source
         self.source_queue = source.generate_packets()
 
@@ -208,33 +213,39 @@ class Event:
     def get_total_customers(self):
         return self.total_cust
 
-    def read_from_file(self):
-        q = queue.Queue()
-        last_line = None
+    def read_from_file(self, FILENAME):
+        self.sourceModel = SourceModel(0,0,0)
+        self.source_queue = self.sourceModel.generate_from_file(FILENAME)
 
-        with open(FILENAME) as f:
-            for line in f:
-                if not last_line == None:
-                    data = line.split()
-                last_line = line
+    def get_total_packets(self):
+        return self.total_packets
+
 
 
 def main():
-    if len(sys.argv) < 3:
+    if len(sys.argv) == 2:
+        FILENAME = sys.argv[1]
+    # print(FILENAME)
+        EventHandler = Event(0,0)
+        EventHandler.read_from_file(FILENAME)
+        EventHandler.start_sim()
+        print_statistics(EventHandler.get_total_customers(),EventHandler.get_sojourn(), EventHandler.get_total_packets())
+
+    elif len(sys.argv) < 3:
         print("Usage: {} npkts lambda".format(sys.argv[0]))
 
-    # for x in range(len(sys.argv)):
-    #     print(sys.argv[x])
-    # #
-    EventHandler = Event(int(sys.argv[1]),int(sys.argv[2]))
-    # print(sys.argv[1])
-    EventHandler.generateSource()
-    EventHandler.start_sim()
-    print_statistics(EventHandler.get_total_customers(),EventHandler.get_sojourn())
+    else:
+        # for x in range(len(sys.argv)):
+        #     print(sys.argv[x])
+        # #
+        EventHandler = Event(int(sys.argv[1]),float(sys.argv[2]))
+        # print(sys.argv[1])
+        EventHandler.generateSource()
+        EventHandler.start_sim()
+        print_statistics(EventHandler.get_total_customers(),EventHandler.get_sojourn(),EventHandler.get_total_packets())
 
 
-def print_statistics( total_customers ,total_sojourn_time):
-    num_packets = float(sys.argv[1])
+def print_statistics( total_customers ,total_sojourn_time, num_packets):
     avg_customer = float(float(total_sojourn_time)/num_packets)
     print("------------ STATISTICS ------------")
     print("N: {0:.2f} average number of packets in the system".format(float(float(total_customers)/num_packets)))
