@@ -8,7 +8,11 @@ import Queue
 PACKET_SIZE_MEAN = 1250
 FILENAME = 'trace.txt'
 LINK_SPEED = 1250
-DEBUG = True
+DEBUG = False
+P = [0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0,
+     0, 0, 0]
+
 
 class Event:
     # Input parameters
@@ -53,11 +57,23 @@ class Event:
             # announce departure
             # departure time is now current time
 
-            #
+            self.current_packet = packet
             self.cur_proc = self.get_process_time(packet)
             self.cur_departure_time = self.cur_proc + self.cur_time
             self.cur_time = self.cur_departure_time
+            if DEBUG:
+                print("packet {}: | arrival: {} | process: {} | departure: {} | cur: {}|".format(
+                    self.current_packet.get_packetno(),
+                    self.current_packet.get_arrivaltime(), self.cur_proc, self.cur_departure_time,
+                    self.cur_time))
+
             self.output_departure(packet, self.calculate_sojourn(packet,self.cur_time))
+
+        total_sojourn_time = self.total_sojourn
+        total_customers = self.total_cust
+        # print(int(total_customers))
+        # print(int(total_sojourn_time))
+
 
 
     def handle_arrival(self,incoming,server_queue):
@@ -68,10 +84,11 @@ class Event:
             self.current_packet = incoming
             self.cur_time = inc_arrival_time
             self.cur_proc = self.get_process_time(incoming)
-            print("current:" + str(self.cur_time) + " | " + str(self.cur_proc))
 
             self.cur_departure_time = self.cur_time + self.cur_proc
-            print("departure time:" + str(self.cur_departure_time))
+            if DEBUG:
+                print("current:" + str(self.cur_time) + " | " + str(self.cur_proc))
+                print("departure time:" + str(self.cur_departure_time))
 
             self.output_arrival(incoming)
             self.total_sojourn += self.cur_proc
@@ -96,10 +113,11 @@ class Event:
                     # self.cur_time = self.current_packet.get_arrivaltime()
                     self.cur_departure_time = self.calculate_departure(self.current_packet, self.cur_time)
                     self.cur_proc = self.get_process_time(self.current_packet)
-                    print("cur packet {}: | cur arrival: {} | cur process: {} | cur departure: {} | cur: {}|".format(
-                        self.current_packet.get_packetno(),
-                        self.current_packet.get_arrivaltime(), self.cur_proc, self.cur_departure_time,
-                        self.cur_time))
+                    if DEBUG:
+                        print("cur packet {}: | cur arrival: {} | cur process: {} | cur departure: {} | cur: {}|".format(
+                            self.current_packet.get_packetno(),
+                            self.current_packet.get_arrivaltime(), self.cur_proc, self.cur_departure_time,
+                            self.cur_time))
 
                 # If does not finish earlier than next packet, add incoming to queue
                 else:
@@ -109,10 +127,11 @@ class Event:
                     # Increase queue size
                     self.current_queue_size += 1
                     server_queue.put(incoming)
-                    print("packet {}: | arrival: {} | process: {} | departure: {} | cur: {}|".format(
-                        self.current_packet.get_packetno(),
-                        self.current_packet.get_arrivaltime(), self.cur_proc, self.cur_departure_time,
-                        self.cur_time))
+                    if DEBUG:
+                        print("packet {}: | arrival: {} | process: {} | departure: {} | cur: {}|".format(
+                            self.current_packet.get_packetno(),
+                            self.current_packet.get_arrivaltime(), self.cur_proc, self.cur_departure_time,
+                            self.cur_time))
                     return
 
             # Case 3 Queue empty
@@ -127,11 +146,11 @@ class Event:
                 self.cur_proc = self.get_process_time(incoming)
                 self.cur_departure_time = self.cur_time + self.cur_proc
                 self.output_arrival(incoming)
-                self.current_queue_size += 1
-                print("packet {}: | arrival: {} | process: {} | departure: {} | cur: {}|".format(
-                    self.current_packet.get_packetno(),
-                    self.current_packet.get_arrivaltime(), self.cur_proc, self.cur_departure_time,
-                    self.cur_time))
+                if DEBUG:
+                    print("packet {}: | arrival: {} | process: {} | departure: {} | cur: {}|".format(
+                        self.current_packet.get_packetno(),
+                        self.current_packet.get_arrivaltime(), self.cur_proc, self.cur_departure_time,
+                        self.cur_time))
 
             # Current packet still processing
             else:
@@ -149,17 +168,25 @@ class Event:
 
     def output_arrival(self,incoming_pkt):
         # [3749.00]: pkt 2748 arrives and finds 38 packets in the queue
-        print("[{}]: pkt {} and finds {} in the queue").format(self.cur_time,
+        print("[{}] pkt {} arrives and finds {} in the queue").format(float(round(self.cur_time,4)),
                                                               incoming_pkt.get_packetno(),
                                                               self.current_queue_size)
-        # TODO update array with P[0..10]
 
-        # TODO update queue size total ie total_customers
+        # TODO: P[0..11] updating, if its over 10 in queue P[11] incremented [DONE]
+        if self.current_queue_size <= 10:
+            P[self.current_queue_size] += 1
+            # print("P updated" + str(self.current_queue_size))
+        else:
+            P[11] = P[11] + 1
+
+        # TODO update queue size total ie total_customers [DONE]
+        self.total_cust += (self.current_queue_size + 1)
+        # print(self.total_cust)
 
     def output_departure(self,packet,sojourn):
         # [4638.00]: pkt 6102 departs having spent 243.00 us in the system
         print("[{}] pkt {} departs having spent {} us in the system".format(
-            self.cur_time, packet.get_packetno(), sojourn
+            float(round(self.cur_time, 4)), packet.get_packetno(), sojourn
         ))
 
     def calculate_sojourn(self, current_packet, current_time):
@@ -174,6 +201,12 @@ class Event:
         source = SourceModel(self.N_PKTS,int(sys.argv[2]),PACKET_SIZE_MEAN)
         self.sourceModel = source
         self.source_queue = source.generate_packets()
+
+    def get_sojourn(self):
+        return self.total_sojourn
+
+    def get_total_customers(self):
+        return self.total_cust
 
     def read_from_file(self):
         q = queue.Queue()
@@ -197,6 +230,19 @@ def main():
     # print(sys.argv[1])
     EventHandler.generateSource()
     EventHandler.start_sim()
+    print_statistics(EventHandler.get_total_customers(),EventHandler.get_sojourn())
+
+
+def print_statistics( total_customers ,total_sojourn_time):
+    num_packets = float(sys.argv[1])
+    avg_customer = float(float(total_sojourn_time)/num_packets)
+    print("------------ STATISTICS ------------")
+    print("N: {0:.2f} average number of packets in the system".format(float(float(total_customers)/num_packets)))
+    print("T: {0:.2f} the average time spent by customer in the system".format(avg_customer))
+
+    print("\nProbabilities")
+    for x in range(0,12):
+        print("P[" + str(x) + "] = {}".format(float(P[x])/num_packets))
 
 
 if __name__ == '__main__':
