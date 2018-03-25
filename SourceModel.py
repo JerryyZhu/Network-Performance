@@ -49,7 +49,9 @@ class SourceModel:
 
     def generate_size(self):
         # return -1 * math.log(1.0 - random.random()) / self.packet_size_mean
-        return random.expovariate(self.packet_size_mean)
+        size = random.expovariate(1.0/self.packet_size_mean)
+        print("Packet size = " + str(size))
+        return size
         # return -math.log(1.0 - random.random()) / rateParameter
 
     def exponential_number_generator(self,lambd):
