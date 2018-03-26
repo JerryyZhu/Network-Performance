@@ -50,18 +50,16 @@ class SourceModel:
     def generate_from_file(self, FILENAME):
         q = Queue.Queue()
         time = 0.0
-        last_line = None
         i = 1
         with open(FILENAME) as f:
             for line in f:
-                if not last_line == None:
-                    # print (line)
-                    data = line.split()
-                    time = time + float(data[0])
-                    p = EventPkt(i,int(data[1]),time)
-                    q.put(p)
-                    i = i + 1
-                last_line = line
+
+                # print (line)
+                data = line.split()
+                time = time + float(data[0])
+                p = EventPkt(i,int(data[1]),time)
+                q.put(p)
+                i = i + 1
         self.server_queue = q
         # if DEBUG:
         print("There are {} packets".format(i))

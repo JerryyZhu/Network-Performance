@@ -47,7 +47,7 @@ class Event:
     def start_sim(self):
         print("called start_sim")
         self.server_queue = Queue.Queue()
-        for x in range(0, self.sourceModel.get_num_packets()-1):
+        while not self.source_queue.empty():
             incoming_packet = self.sourceModel.generate_packet()
             self.handle_arrival(incoming_packet, self.server_queue)
             # print(x)
