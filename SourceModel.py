@@ -9,6 +9,8 @@ import random
 import math
 import Queue
 
+TEST = True
+
 FILENAME = 'small_trace.txt'
 class SourceModel:
 
@@ -58,6 +60,8 @@ class SourceModel:
                 data = line.split()
                 time = time + float(data[0])
                 p = EventPkt(i,int(data[1]),time)
+                if TEST:
+                    print("Packet {} size {} arrival {}".format(i,int(data[1]),time))
                 q.put(p)
                 i = i + 1
         self.server_queue = q

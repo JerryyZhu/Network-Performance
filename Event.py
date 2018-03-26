@@ -131,6 +131,7 @@ class Event:
                     # Increase queue size
                     self.current_queue_size += 1
                     server_queue.put(incoming)
+                    self.total_cust += self.current_queue_size
                     if DEBUG:
                         print("packet {}: | arrival: {} | process: {} | departure: {} | cur: {}|".format(
                             self.current_packet.get_packetno(),
@@ -163,6 +164,7 @@ class Event:
                 self.cur_time = inc_arrival_time
                 self.output_arrival(incoming)
                 self.current_queue_size += 1
+                self.total_cust += 1
 
 
     def get_process_time(self,incoming_pkt):
@@ -173,7 +175,7 @@ class Event:
 
     def output_arrival(self,incoming_pkt):
         # [3749.00]: pkt 2748 arrives and finds 38 packets in the queue
-        print("[{}] pkt {} arrives and finds {} in the queue").format(float(round(self.cur_time,4)),
+        print("[{}] pkt {} arrives and finds {} in the queue").format(float(self.cur_time),
                                                               incoming_pkt.get_packetno(),
                                                               self.current_queue_size)
 
@@ -185,13 +187,13 @@ class Event:
             P[11] = P[11] + 1
 
         # TODO update queue size total ie total_customers [DONE]
-        self.total_cust += (self.current_queue_size + 1)
+        # self.total_cust += (self.current_queue_size + 1)
         # print(self.total_cust)
 
     def output_departure(self,packet,sojourn):
         # [4638.00]: pkt 6102 departs having spent 243.00 us in the system
         print("[{}] pkt {} departs having spent {} us in the system".format(
-            float(round(self.cur_time, 4)), packet.get_packetno(), sojourn
+            float(self.cur_time), packet.get_packetno(), sojourn
         ))
 
     def calculate_sojourn(self, current_packet, current_time):
