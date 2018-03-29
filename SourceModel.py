@@ -72,7 +72,7 @@ class SourceModel:
 
     def generate_size(self):
         # return -1 * math.log(1.0 - random.random()) / self.packet_size_mean
-        size = random.expovariate(1.0/self.packet_size_mean)
+        size = random.expovariate(1.0/1250)
         # print("Packet size = " + str(size))
         return size
         # return -math.log(1.0 - random.random()) / rateParameter

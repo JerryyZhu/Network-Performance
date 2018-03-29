@@ -3,15 +3,21 @@ from SourceModel import *
 from collections import deque
 import random
 import Queue
+from matplotlib.ticker import FuncFormatter
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 
 PACKET_SIZE_MEAN = 1250
 FILENAME = 'small_trace.txt'
 LINK_SPEED = 1250
 DEBUG = True
-P = [0, 0, 0, 0, 0,
-     0, 0, 0, 0, 0,
-     0, 0, 0]
+P = {}
+MAX_QUEUE_SIZE = 0
+big_array = []
+TOTAL_CUST = 0
+
 
 
 class Event:
@@ -26,6 +32,7 @@ class Event:
     current_packet = None
     current_queue_size = 0
     source_queue = None
+    global TOTAL_CUST
 
 
     # Measurement parameter
@@ -45,6 +52,7 @@ class Event:
 
 
     def start_sim(self):
+        global TOTAL_CUST
         print("called start_sim")
         self.server_queue = Queue.Queue()
         while not self.source_queue.empty():
@@ -74,6 +82,7 @@ class Event:
 
         total_sojourn_time = self.total_sojourn
         total_customers = self.total_cust
+        TOTAL_CUST = self.total_cust
         # print(int(total_customers))
         # print(int(total_sojourn_time))
         # print("all done")
@@ -101,7 +110,7 @@ class Event:
                 print("packet {}: | arrival: {} | process: {} | departure: {} | cur: {}|".format(self.current_packet.get_packetno(),
                                                                              self.current_packet.get_arrivaltime(), self.cur_proc,
                                                                              self.cur_departure_time, self.cur_time))
-
+                print("Queue size is{}".format(self.current_queue_size))
         else:
             # Case 2 Queue not empty
             while server_queue.empty() == False:
@@ -113,6 +122,7 @@ class Event:
                     self.output_departure(self.current_packet, self.calculate_sojourn(self.current_packet,self.cur_time))
                     if self.current_queue_size > 0:
                         self.current_queue_size -= 1
+                        print("Queue size is{}".format(self.current_queue_size))
                     self.current_packet = server_queue.get()
                     # self.cur_time = self.current_packet.get_arrivaltime()
                     self.cur_departure_time = self.calculate_departure(self.current_packet, self.cur_time)
@@ -122,6 +132,7 @@ class Event:
                             self.current_packet.get_packetno(),
                             self.current_packet.get_arrivaltime(), self.cur_proc, self.cur_departure_time,
                             self.cur_time))
+                        print("Queue size is{}".format(self.current_queue_size))
 
                 # If does not finish earlier than next packet, add incoming to queue
                 else:
@@ -137,6 +148,7 @@ class Event:
                             self.current_packet.get_packetno(),
                             self.current_packet.get_arrivaltime(), self.cur_proc, self.cur_departure_time,
                             self.cur_time))
+                        print("Queue size is{}".format(self.current_queue_size))
                     return
 
             # Case 3 Queue empty
@@ -157,12 +169,14 @@ class Event:
                         self.current_packet.get_packetno(),
                         self.current_packet.get_arrivaltime(), self.cur_proc, self.cur_departure_time,
                         self.cur_time))
+                    print("Queue size is{}".format(self.current_queue_size))
 
             # Current packet still processing
             else:
                 server_queue.put(incoming)
                 self.cur_time = inc_arrival_time
                 self.output_arrival(incoming)
+                print("Queue size is{}".format(self.current_queue_size))
                 self.current_queue_size += 1
                 self.total_cust += 1
 
@@ -174,17 +188,19 @@ class Event:
         return incoming_pkt.get_packet_size()/self.RATE
 
     def output_arrival(self,incoming_pkt):
+        global MAX_QUEUE_SIZE
         # [3749.00]: pkt 2748 arrives and finds 38 packets in the queue
         print("[{}] pkt {} arrives and finds {} in the queue").format(float(self.cur_time),
                                                               incoming_pkt.get_packetno(),
                                                               self.current_queue_size)
 
         # TODO: P[0..11] updating, if its over 10 in queue P[11] incremented [DONE]
-        if self.current_queue_size <= 10:
-            P[self.current_queue_size] += 1
-            # print("P updated" + str(self.current_queue_size))
-        else:
-            P[11] = P[11] + 1
+        if P.get(self.current_queue_size) is None:
+            P[self.current_queue_size] = 0
+        P[self.current_queue_size] += 1
+
+        if MAX_QUEUE_SIZE < self.current_queue_size:
+            MAX_QUEUE_SIZE = self.current_queue_size
 
         # TODO update queue size total ie total_customers [DONE]
         # self.total_cust += (self.current_queue_size + 1)
@@ -245,6 +261,7 @@ def main():
         EventHandler.generateSource()
         EventHandler.start_sim()
         print_statistics(EventHandler.get_total_customers(),EventHandler.get_sojourn(),EventHandler.get_total_packets())
+    plot_graph()
 
 
 def print_statistics( total_customers ,total_sojourn_time, num_packets):
@@ -254,8 +271,18 @@ def print_statistics( total_customers ,total_sojourn_time, num_packets):
     print("T: {0:.2f} the average time spent by customer in the system".format(avg_customer))
 
     print("\nProbabilities")
-    for x in range(0,12):
-        print("P[" + str(x) + "] = {}".format(float(P[x])/num_packets))
+    # for x in range(0,12):
+    #     print("P[" + str(x) + "] = {}".format(float(P[x])/num_packets))
+
+def plot_graph():
+
+    # Find max queue size
+    for x in range(0, MAX_QUEUE_SIZE+1):
+        big_array.append(P[x])
+
+    plt.plot(range(0,MAX_QUEUE_SIZE +1) , big_array)
+    plt.show()
+
 
 
 if __name__ == '__main__':
