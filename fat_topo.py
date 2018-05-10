@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # sudo mn --custom fat_topo.py --topo mytopo --arp --controller=remote,ip=127.0.0.1,port=55555
-# sudo ryu-manager ryu.app.simple_switch ryu.app.ofctl_rest --ofp-tcp-listen-port 55555 --verbose
+# sudo ryu-manager RyuController.py ryu.app.ofctl_rest --ofp-tcp-listen-port 55555 --verbose
 
 
 from mininet.topo import Topo
@@ -10,6 +10,8 @@ from mininet.node import OVSController
 from mininet.util import dumpNodeConnections
 from mininet.log import setLogLevel
 from mininet.cli import CLI
+
+offset = 1
 
 def str2dpid(dpid_string):
     """Given 8 integers separated by ':', convert the string into an
@@ -41,15 +43,15 @@ class FatTreeTopo(Topo):
 
     # init
     def build(self, k=2):
-        self.test()
-        return
+      #  self.test()
+       # return
 
         # Initialise the lists
         coreList = []
         aggrList = []
         edgeList = []
         hostList = []
-        k = 2;
+        k = 4
 
         # Create core switches
         count = 1
@@ -77,7 +79,7 @@ class FatTreeTopo(Topo):
 
                 # Link aggr to core router
                 for i in range(k/2):
-                    self.addLink(aggr, coreList[countCore], port1=(k/2 + i), port2=pod)
+                    self.addLink(aggr, coreList[countCore], port1=(k/2 + i + offset), port2=pod + offset)
                     # print("Add link " + aggr + "eth" + str(k/2 + i) + "   " + coreList[countCore] + "eth" + str(pod))
                     countCore += 1
 
@@ -85,7 +87,7 @@ class FatTreeTopo(Topo):
                 print("Assigning hosts for edge switch" + edge)
                 for h in range(k/2):
                     host = self.addHost("h%d" % (hostCount), ip = "10.%d.%d.%d" % (pod,switch, h + 2))
-                    self.addLink(host, edge, port1 = 0, port2 = h)
+                    self.addLink(host, edge, port1 = 1, port2 = h + offset)
                     # print("Host count: " + str(hostCount) + "port2: " + str(h))
                     hostList.append(host)
                     hostCount += 1
@@ -100,7 +102,7 @@ class FatTreeTopo(Topo):
                     current_aggr = aggrList[pod*k/2 + l]
                     # print("Adding link to " + current_aggr + " eth" + str(e))
 
-                    self.addLink(current_edge, current_aggr, port1 = (k/2 + l), port2=e)
+                    self.addLink(current_edge, current_aggr, port1 = (k/2 + l + offset), port2=e+offset)
 
         print(coreList)
         print(aggrList)
